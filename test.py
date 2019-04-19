@@ -40,7 +40,7 @@ class MuraGenerator(Sequence):
             else:
                 y_batch.append(0)
 
-        yield x_batch, y_batch
+        yield (x_batch, y_batch)
 
     def on_epoch_end(self):
         if self.shuffle is True:
