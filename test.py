@@ -28,6 +28,7 @@ class MuraGenerator(Sequence):
     def __getitem__(self, idx):
         x_batch = []
         y_batch = []
+        w_batch = []
 
         while len(x_batch) < self.bs:
             path = str(self.paths_images[idx])
@@ -40,8 +41,9 @@ class MuraGenerator(Sequence):
 
             x_batch.append(img)
             y_batch.append(1 if "positive" in path else 0)
+            w_batch.append(1 if "positive" in path else 1.6)
 
-        return [np.asarray(x_batch), np.asarray(y_batch), {0: 1.6, 1: 1}]
+        return [np.asarray(x_batch), np.asarray(y_batch), np.asarray(w_batch)]
 
     def transform_image(self, image):
 
