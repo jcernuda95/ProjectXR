@@ -19,7 +19,6 @@ class MuraGenerator(Sequence):
     def __init__(self, path_to_file, batch_size, shuffle=True):
         self.bs = batch_size
         self.paths_images = np.loadtxt(path_to_file, dtype='str')
-        print(str(self.paths_images[0]))
         self.shuffle = shuffle
         self.on_epoch_end()
 
@@ -31,13 +30,12 @@ class MuraGenerator(Sequence):
         y_batch = []
 
         while len(x_batch) < self.bs:
-            path = self.paths_images[idx]
+            path = str(self.paths_images[idx])
             img = image.load_img(path, color_mode='rgb',
                                  target_size=(320, 320))
 
             img = image.img_to_array(img)
-            # img = np.expand_dims(img, -1)
-            print(img.shape)
+
             img = self.transform_image(img)
 
             x_batch.append(img)
@@ -47,7 +45,7 @@ class MuraGenerator(Sequence):
 
     def on_epoch_end(self):
         if self.shuffle:
-            self.paths_images = random.shuffle(self.paths_images)
+            self.paths_images = np.random.shuffle(self.paths_images)
 
     def transform_image(self, image):
 
