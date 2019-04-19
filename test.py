@@ -49,7 +49,7 @@ class MuraGenerator(Sequence):
 
     def transform_image(self, image):
 
-        # image = preprocess_input(image)
+        image = preprocess_input(image, data_format='channels_last')
 
         if random.randint(0, 1):
             image = np.fliplr(image)
@@ -88,7 +88,7 @@ if __name__ == "__main__":
     model = generate_model()
 
     train_generator = MuraGenerator(
-        path_to_file='MURA-v1.1/train_image_paths.csv', batch_size=64)
+        path_to_file='MURA-v1.1/train_image_paths.csv', batch_size=8)
 
     if not os.path.isdir('logs'):
         os.mkdir('logs')
