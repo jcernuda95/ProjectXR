@@ -18,7 +18,7 @@ import os
 class MuraGenerator(Sequence):
     def __init__(self, path_to_file, batch_size, shuffle=True):
         self.bs = batch_size
-        self.paths_images = np.genfromtxt(path_to_file, delimiter=',')
+        self.paths_images = np.genfromtxt(path_to_file)
         self.shuffle = shuffle
         self.on_epoch_end()
 
