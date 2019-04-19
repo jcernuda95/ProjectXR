@@ -1,24 +1,25 @@
-import imageio
-from keras import Model, Sequential
+from keras import Sequential
 from keras.applications import DenseNet169
 from keras.callbacks import CSVLogger, ModelCheckpoint, ReduceLROnPlateau
 from keras.layers import Dense, GlobalAveragePooling2D
 from keras.utils import Sequence
 from skimage import transform
 from keras.preprocessing import image
+from keras.models import load_model
+from glob import glob
+import argparse
 
 from keras_applications.imagenet_utils import preprocess_input
 from keras import optimizers
-import sklearn
 import random
 import numpy as np
 import os
 
 
 class MuraGenerator(Sequence):
-    def __init__(self, path_to_file, batch_size, shuffle=True):
+    def __init__(self, paths_images, batch_size, shuffle=True):
         self.bs = batch_size
-        self.paths_images = np.loadtxt(path_to_file, dtype='str')
+        self.paths_images = paths_images
         self.shuffle = shuffle
         self.on_epoch_end()
 
@@ -85,20 +86,45 @@ def generate_model():
 
 
 if __name__ == "__main__":
-    model = generate_model()
+    batches = 10
+    train_percentage = 0.75
+    path_to_file = 'MURA-v1.1/train_image_paths.csv'
 
-    train_generator = MuraGenerator(
-        path_to_file='MURA-v1.1/train_image_paths.csv', batch_size=8)
+    parser = argparse.ArgumentParser(description="My parser")
+    parser.add_argument('-r', dest='resume', action='store_true', default='False')
+    resume = parser.parse_args().resume
+    starting_epoch = 0
+
+    if resume:
+        paths_models = sorted(glob('models/*'))
+        model = load_model(paths_models[-1])
+        starting_epoch = int(paths_models[-1][7:9])
+        print("Path: ", paths_models[-1])
+        print("starting epoch: ", int(paths_models[-1][7:9]))
+    else:
+        model = generate_model()
+
+    paths_images = np.loadtxt(path_to_file, dtype='str')
+
+    train_paths = paths_images[:int(train_percentage*len(paths_images))]
+    eval_paths = paths_images[int(train_percentage * len(paths_images)):]
+
+    train_generator = MuraGenerator(train_paths, batch_size=8)
+    eval_generator = MuraGenerator(eval_paths, batch_size=8)
 
     if not os.path.isdir('logs'):
         os.mkdir('logs')
 
-    csvlogger = CSVLogger('logs/training.log')
-    checkpointer = ModelCheckpoint('models/model.hdf5', save_best_only=True)
+    csvlogger = CSVLogger('logs/training.log', append=resume)
+    checkpointer = ModelCheckpoint('models/model-e{epoch:2d}.hdf5', save_best_only=True)
     reduce_lr = ReduceLROnPlateau(monitor='val_accuracy', factor=0.1,
-                                  patience=2, min_lr=1e-6)
+                                  patience=1, min_lr=1e-6)
 
     model.fit_generator(train_generator,
                         verbose=1,
                         callbacks=[csvlogger, checkpointer, reduce_lr],
-                        class_weight={0: 0.3848, 1: 0.6152})
+                        epochs=batches,
+                        starting_epoch=starting_epoch,
+                        class_weight={0: 0.3848, 1: 0.6152},
+                        validation_data=eval_generator,
+                        validation_steps=len(eval_paths)/batches)
