@@ -23,7 +23,7 @@ class MuraGenerator(Sequence):
         self.on_epoch_end()
 
     def __len__(self):
-        return self.paths_images.shape[0] // self.bs
+        return len(self.paths_images) // self.bs
 
     def __getitem__(self, idx):
         x_batch = []
