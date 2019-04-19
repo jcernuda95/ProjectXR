@@ -18,7 +18,7 @@ import os
 class MuraGenerator(Sequence):
     def __init__(self, path_to_file, batch_size, shuffle=True):
         self.bs = batch_size
-        self.paths_images = np.genfromtxt(path_to_file)
+        self.paths_images = np.loadtxt(path_to_file, dtype=str)
         self.shuffle = shuffle
         self.on_epoch_end()
 
@@ -86,7 +86,7 @@ def generate_model():
 
 if __name__ == "__main__":
     train_generator = MuraGenerator(
-        path_to_file='./MURA-v1.1/train_image_paths.csv', batch_size=64)
+        path_to_file='MURA-v1.1/train_image_paths.csv', batch_size=64)
     model = generate_model()
 
     if not os.path.isdir('logs'):
