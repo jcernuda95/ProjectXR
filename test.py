@@ -86,7 +86,7 @@ def generate_model():
 
 if __name__ == "__main__":
     train_generator = MuraGenerator(
-        path_to_file='MURA-v1.1/train_image_paths.csv', batch_size=64)
+        path_to_file='./MURA-v1.1/train_image_paths.csv', batch_size=64)
     model = generate_model()
 
     if not os.path.isdir('logs'):
