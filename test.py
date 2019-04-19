@@ -133,8 +133,6 @@ if __name__ == "__main__":
                                   patience=1, min_lr=1e-6)
 
     model.fit_generator(train_generator,
-                        use_multiprocessing=True,
-                        workers=4,
                         callbacks=[csvlogger, checkpointer, reduce_lr],
                         epochs=10,
                         initial_epoch=starting_epoch,
