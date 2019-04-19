@@ -45,7 +45,7 @@ class MuraGenerator(Sequence):
 
     def on_epoch_end(self):
         if self.shuffle:
-            self.paths_images = np.random.shuffle(self.paths_images)
+            np.random.shuffle(self.paths_images)
 
     def transform_image(self, image):
 
