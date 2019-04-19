@@ -30,7 +30,7 @@ class MuraGenerator(Sequence):
 
         while len(x_batch) < self.bs:
             path = str(self.paths_images['paths'].iloc[idx])
-            image = imageio.imread(path)
+            image = imageio.imread(path, as_gray=False)
 
             image = self.transform_image(image)
 
@@ -40,7 +40,7 @@ class MuraGenerator(Sequence):
             else:
                 y_batch.append(0)
 
-        yield (x_batch, y_batch)
+        return [np.asarray(x_batch), np.asarray(y_batch)]
 
     def on_epoch_end(self):
         if self.shuffle is True:
@@ -49,7 +49,7 @@ class MuraGenerator(Sequence):
     def transform_image(self, image):
         image = transform.resize(image, (320, 320))
 
-        image = preprocess_input(image)
+        # image = preprocess_input(image)
 
         if random.randint(0, 1):
             image = np.fliplr(image)
