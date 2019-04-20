@@ -186,18 +186,38 @@ if __name__ == "__main__":
 
         train_paths, val_paths = train_test_split(img_paths)
 
-        # train_paths = sorted(train_paths)
-        # train_paths.reverse()
-        # print("Train path: ", train_paths[1])
-        paths =[]
+        positives = 0
         for path in train_paths:
-            if "positive" in path:
-                paths.append(path)
-        for path in train_paths:
-            if "negative" in path:
-                paths.append(path)
+            positives += 1 if "positive" in path else 0
+        negatives = len(train_paths) - positives
+
+        total = float(len(train_paths))
+        weights_train_paths = [negatives / total, positives / total]
+
+        positives = 0
+        for path in val_paths:
+            positives += 1 if "positive" in path else 0
+        negatives = len(val_paths) - positives
+
+        total = float(len(val_paths))
+        weights_val_paths = [negatives / total, positives / total]
+
+        print("Train weights: ", weights_train_paths)
+        print("Val weights: ", weights_val_paths)
+
+        train_paths = sorted(train_paths)
+        train_paths.reverse()
         print("Train path: ", train_paths[1])
-        train_generator = MuraGenerator(paths, batch_size=16, weights=weights,
+        # paths =[]
+        # for path in train_paths:
+        #     if "positive" in path:
+        #         paths.append(path)
+        # for path in train_paths:
+        #     if "negative" in path:
+        #         paths.append(path)
+        # print("Train path: ", train_paths[1])
+
+        train_generator = MuraGenerator(train_paths, batch_size=16, weights=weights,
                                         augment=True if args.stage > 0 else False)
         val_generator = MuraGenerator(val_paths, batch_size=16, weights=weights)
 
