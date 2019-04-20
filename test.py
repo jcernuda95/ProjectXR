@@ -135,7 +135,9 @@ if __name__ == "__main__":
     negatives = len(img_paths) - positives
 
     total = float(len(img_paths))
-    weights = (negatives/total, positives/total)
+    weights = [negatives/total, positives/total]
+
+    print("Weights: ", weights)
 
     if args.resume is True:
         paths_models = sorted(glob('models/*'))
