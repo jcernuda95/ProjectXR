@@ -21,8 +21,10 @@ from sklearn.metrics import precision_score, recall_score
 def recall(y_true, y_pred):
     tem_weights = [0.5959302325581395, 0.40406976744186046]
     copy = y_true
-    array_y_true = K.tf.Session().run(copy)
+
+    array_y_true = K.get_session().run(copy)
     print("Recall: ", array_y_true)
+
     weights = []
     for val in array_y_true:
         weights.append(tem_weights[val] if "positive" in path else tem_weights[val])
