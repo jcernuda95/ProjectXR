@@ -109,6 +109,7 @@ def generate_model(stage):
 
 
 if __name__ == "__main__":
+    global weights
 
     parser = argparse.ArgumentParser(description="MURA image classification")
     parser.add_argument('-r', '--resume', action='store_true', default='False',
@@ -126,6 +127,16 @@ if __name__ == "__main__":
 
     starting_epoch = 0
 
+    img_paths = np.loadtxt(args.train_path, dtype='str')
+    img_paths = [str(i) for i in img_paths]
+    positives = 0
+    for path in img_paths:
+        positives += 1 if "positive" in path else 0
+    negatives = len(img_paths) - positives
+
+    total = float(len(img_paths))
+    weights = (negatives/total, positives/total)
+
     if args.resume is True:
         paths_models = sorted(glob('models/*'))
         model = load_model(paths_models[-1])
@@ -134,18 +145,6 @@ if __name__ == "__main__":
         print("starting epoch: ", int(paths_models[-1][7:9]))
     else:
         model = generate_model(int(args.stage))
-
-    img_paths = np.loadtxt(args.train_path, dtype='str')
-    img_paths = [str(i) for i in img_paths]
-
-    positives = 0
-    for path in img_paths:
-        positives += 1 if "positive" in path else 0
-    negatives = len(img_paths) - positives
-
-    global weights
-    total = float(len(img_paths))
-    weights = [negatives/total, positives/total]
 
     val_split = int(0.75 * len(img_paths))
     train_paths = img_paths[:val_split]
