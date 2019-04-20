@@ -4,7 +4,7 @@ import random
 from glob import glob
 
 import numpy as np
-import keras.backend as K
+from keras import backend as K
 from keras import Sequential
 from keras import optimizers
 from keras.applications import DenseNet169
@@ -15,43 +15,40 @@ from keras.preprocessing import image
 from keras.utils import Sequence
 from keras_applications.imagenet_utils import preprocess_input
 from skimage import transform
-from sklearn.metrics import precision_score, recall_score
+from sklearn.metrics import roc_auc_score, precision_score, recall_score
 
 
 def recall(y_true, y_pred):
-    tem_weights = [0.5959302325581395, 0.40406976744186046]
-    copy = y_true
-
-    array_y_true = K.get_session().run(copy)
-    print("Recall: ", array_y_true)
-
+    val_weights = [0.5959302325581395, 0.40406976744186046]
+    arry_y_true = y_true.eval()
     weights = []
-    for val in array_y_true:
-        weights.append(tem_weights[val] if "positive" in path else tem_weights[val])
 
-    tensor_weights = K.tf.convert_to_tensor(weights, dtype=K.tf.float32)
+    for val in arry_y_true:
+        weights.append(val_weights[val] if "positive" in path else val_weights[val])
 
-    score, up_opt = K.tf.metrics.recall(y_true, y_pred, tensor_weights)
-    K.get_session().run(K.tf.local_variables_initializer())
-    with K.tf.control_dependencies([up_opt]):
-       score = K.tf.identity(score)
-    return score
+    return K.tf.py_func(roc_auc_score, (y_true, y_pred, None, 1, 'binary', weights), K.tf.double)
 
 
 def precision(y_true, y_pred):
-    score, up_opt = K.tf.metrics.precision(y_true, y_pred)
-    K.get_session().run(K.tf.local_variables_initializer())
-    with K.tf.control_dependencies([up_opt]):
-       score = K.tf.identity(score)
-    return score
+    val_weights = [0.5959302325581395, 0.40406976744186046]
+    arry_y_true = y_true.eval()
+    weights = []
+
+    for val in arry_y_true:
+        weights.append(val_weights[val] if "positive" in path else val_weights[val])
+
+    return K.tf.py_func(roc_auc_score, (y_true, y_pred, None, 1, 'binary', weights), K.tf.double)
 
 
 def auc(y_true, y_pred):
-    score, up_opt = K.tf.metrics.auc(y_true, y_pred)
-    K.get_session().run(K.tf.local_variables_initializer())
-    with K.tf.control_dependencies([up_opt]):
-       score = K.tf.identity(score)
-    return score
+    val_weights = [0.5959302325581395, 0.40406976744186046]
+    arry_y_true = y_true.eval()
+    weights = []
+
+    for val in arry_y_true:
+        weights.append(val_weights[val] if "positive" in path else val_weights[val])
+
+    return K.tf.py_func(roc_auc_score, (y_true, y_pred, None, 1, 'binary', weights), K.tf.double)
 
 
 class MuraGenerator(Sequence):
