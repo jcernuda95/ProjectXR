@@ -151,7 +151,7 @@ if __name__ == "__main__":
     parser.add_argument('--test_path', default='./MURA-v1.1/valid_image_paths.csv',
                         help='Path to test_image_paths.csv')
     parser.add_argument('--model_path', help='Path to a model to resume or proceed with transfer learning')
-    parser.add_argument('-s', '--client', default=0,
+    parser.add_argument('-c', '--client', default=0,
                         help='Client to evaluate')
     args = parser.parse_args()
 
@@ -163,7 +163,7 @@ if __name__ == "__main__":
         model.load_weights(args.model_path)
         print("Path: ", args.model_path)
         if args.resume is True:
-            starting_epoch = int(args.model_path[17:19])
+            starting_epoch = int(args.model_path[31:33])
             print("starting epoch: ", starting_epoch)
 
     img_paths = np.loadtxt(args.train_path, dtype='str')
