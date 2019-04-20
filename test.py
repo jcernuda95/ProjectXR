@@ -18,21 +18,19 @@ from keras_applications.imagenet_utils import preprocess_input
 from skimage import transform
 from sklearn.metrics import precision_score, recall_score
 
-weights = []
-
 
 def recall(y_true, y_pred):
-    global weights
+    weights = [0.5959302325581395, 0.40406976744186046]
     return K.tf.metrics.recall(y_true, y_pred, weights)
 
 
 def precision(y_true, y_pred):
-    global weights
+    weights = [0.5959302325581395, 0.40406976744186046]
     return K.tf.metrics.precision(y_true, y_pred, weights)
 
 
 def auc(y_true, y_pred):
-    global weights
+    weights = [0.5959302325581395, 0.40406976744186046]
     return K.tf.metrics.auc(y_true, y_pred, weights)
 
 
@@ -109,8 +107,6 @@ def generate_model(stage):
 
 
 if __name__ == "__main__":
-    global weights
-
     parser = argparse.ArgumentParser(description="MURA image classification")
     parser.add_argument('-r', '--resume', action='store_true', default='False',
                         help='Resume training from last saved model')
