@@ -207,7 +207,6 @@ if __name__ == "__main__":
                                       verbose=1, patience=1, min_lr=1e-7)
 
         model.fit_generator(train_generator,
-                            use_multiprocessing=True,
                             callbacks=[csvlogger, checkpointer, reduce_lr],
                             epochs=10,
                             initial_epoch=starting_epoch,
