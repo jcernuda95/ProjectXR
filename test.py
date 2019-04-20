@@ -136,7 +136,7 @@ if __name__ == "__main__":
         print("Path: ", paths_models[-1])
         print("starting epoch: ", int(paths_models[-1][7:9]))
     else:
-        model = generate_model(args.stage)
+        model = generate_model(int(args.stage))
 
     img_paths = np.loadtxt(args.train_path, dtype='str')
     img_paths = [str(i) for i in img_paths]
