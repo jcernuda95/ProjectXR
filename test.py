@@ -19,8 +19,16 @@ from sklearn.metrics import precision_score, recall_score
 
 
 def recall(y_true, y_pred):
-    weights = K.tf.convert_to_tensor([0.5959302325581395, 0.40406976744186046], dtype=K.tf.float32)
-    score, up_opt = K.tf.metrics.recall(y_true, y_pred)
+    tem_weights = [0.5959302325581395, 0.40406976744186046]
+    copy = y_true
+    array_y_true = K.tf.Session().run(copy)
+    print(array_y_true)
+    weights = []
+    for val in array_y_true:
+        weights.append(array_y_true[val] if "positive" in path else array_y_true[val])
+    weights = K.tf.convert_to_tensor(weights, dtype=K.tf.float32)
+
+    score, up_opt = K.tf.metrics.recall(y_true, y_pred, weights)
     K.get_session().run(K.tf.local_variables_initializer())
     with K.tf.control_dependencies([up_opt]):
        score = K.tf.identity(score)
@@ -28,8 +36,15 @@ def recall(y_true, y_pred):
 
 
 def precision(y_true, y_pred):
-    weights = K.tf.convert_to_tensor([0.5959302325581395, 0.40406976744186046], dtype=K.tf.float32)
-    score, up_opt = K.tf.metrics.precision(y_true, y_pred)
+    tem_weights = [0.5959302325581395, 0.40406976744186046]
+    copy = y_true
+    array_y_true = K.tf.Session().run(copy)
+    print(array_y_true)
+    weights = []
+    for val in array_y_true:
+        weights.append(array_y_true[val] if "positive" in path else array_y_true[val])
+    weights = K.tf.convert_to_tensor(weights, dtype=K.tf.float32)
+    score, up_opt = K.tf.metrics.precision(y_true, y_pred, weights)
     K.get_session().run(K.tf.local_variables_initializer())
     with K.tf.control_dependencies([up_opt]):
        score = K.tf.identity(score)
@@ -37,8 +52,16 @@ def precision(y_true, y_pred):
 
 
 def auc(y_true, y_pred):
-    weights = K.tf.convert_to_tensor([0.5959302325581395, 0.40406976744186046], dtype=K.tf.float32)
-    score, up_opt = K.tf.metrics.auc(y_true, y_pred)
+    tem_weights = [0.5959302325581395, 0.40406976744186046]
+    copy = y_true
+    array_y_true = K.tf.Session().run(copy)
+    print(array_y_true)
+    weights = []
+    for val in array_y_true:
+        weights.append(array_y_true[val] if "positive" in path else array_y_true[val])
+    weights = K.tf.convert_to_tensor(weights, dtype=K.tf.float32)
+
+    score, up_opt = K.tf.metrics.auc(y_true, y_pred, weights)
     K.get_session().run(K.tf.local_variables_initializer())
     with K.tf.control_dependencies([up_opt]):
        score = K.tf.identity(score)
