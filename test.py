@@ -19,36 +19,39 @@ from sklearn.metrics import roc_auc_score, precision_score, recall_score
 
 
 def recall(y_true, y_pred):
-    val_weights = [0.5959302325581395, 0.40406976744186046]
-    arry_y_true = y_true.eval(session=K.get_session())
-    weights = []
+    with K.tf.Session() as sess:
+        val_weights = [0.5959302325581395, 0.40406976744186046]
+        arry_y_true = y_true.eval(session=sess)
+        weights = []
 
-    for val in arry_y_true:
-        weights.append(val_weights[val] if "positive" in path else val_weights[val])
+        for val in arry_y_true:
+            weights.append(val_weights[val] if "positive" in path else val_weights[val])
 
-    return K.tf.py_func(roc_auc_score, (y_true, y_pred, None, 1, 'binary', weights), K.tf.double)
+        return K.tf.py_func(recall_score, (y_true, y_pred, None, 1, 'binary', weights), K.tf.double)
 
 
 def precision(y_true, y_pred):
-    val_weights = [0.5959302325581395, 0.40406976744186046]
-    arry_y_true = y_true.eval(session=K.get_session())
-    weights = []
+    with K.tf.Session() as sess:
+        val_weights = [0.5959302325581395, 0.40406976744186046]
+        arry_y_true = y_true.eval(session=sess)
+        weights = []
 
-    for val in arry_y_true:
-        weights.append(val_weights[val] if "positive" in path else val_weights[val])
+        for val in arry_y_true:
+            weights.append(val_weights[val] if "positive" in path else val_weights[val])
 
-    return K.tf.py_func(roc_auc_score, (y_true, y_pred, None, 1, 'binary', weights), K.tf.double)
+        return K.tf.py_func(precision_score, (y_true, y_pred, None, 1, 'binary', weights), K.tf.double)
 
 
 def auc(y_true, y_pred):
-    val_weights = [0.5959302325581395, 0.40406976744186046]
-    arry_y_true = y_true.eval(session=K.get_session())
-    weights = []
+    with K.tf.Session() as sess:
+        val_weights = [0.5959302325581395, 0.40406976744186046]
+        arry_y_true = y_true.eval(session=sess)
+        weights = []
 
-    for val in arry_y_true:
-        weights.append(val_weights[val] if "positive" in path else val_weights[val])
+        for val in arry_y_true:
+            weights.append(val_weights[val] if "positive" in path else val_weights[val])
 
-    return K.tf.py_func(roc_auc_score, (y_true, y_pred, None, 1, 'binary', weights), K.tf.double)
+        return K.tf.py_func(roc_auc_score, (y_true, y_pred, None, 1, 'binary', weights), K.tf.double)
 
 
 class MuraGenerator(Sequence):
