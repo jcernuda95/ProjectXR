@@ -139,6 +139,7 @@ def generate_model(stage):
 
 
 if __name__ == "__main__":
+    print("JC")
     parser = argparse.ArgumentParser(description="MURA image classification")
     parser.add_argument('-r', '--resume', action='store_true', default='False',
                         help='Resume training from last saved model')
@@ -188,8 +189,15 @@ if __name__ == "__main__":
         # train_paths = sorted(train_paths)
         # train_paths.reverse()
         # print("Train path: ", train_paths[1])
-
-        train_generator = MuraGenerator(train_paths, batch_size=16, weights=weights,
+        paths =[]
+        for path in train_paths:
+            if "positive" in path:
+                paths.append(path)
+        for path in train_paths:
+            if "negative" in path:
+                paths.append(path)
+        print("Train path: ", train_paths[1])
+        train_generator = MuraGenerator(paths, batch_size=16, weights=weights,
                                         augment=True if args.stage > 0 else False)
         val_generator = MuraGenerator(val_paths, batch_size=16, weights=weights)
 
