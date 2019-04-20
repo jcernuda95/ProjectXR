@@ -20,7 +20,7 @@ from sklearn.metrics import roc_auc_score, precision_score, recall_score
 
 def recall(y_true, y_pred):
     val_weights = [0.5959302325581395, 0.40406976744186046]
-    arry_y_true = y_true.eval()
+    arry_y_true = y_true.eval(session=K.get_session())
     weights = []
 
     for val in arry_y_true:
@@ -31,7 +31,7 @@ def recall(y_true, y_pred):
 
 def precision(y_true, y_pred):
     val_weights = [0.5959302325581395, 0.40406976744186046]
-    arry_y_true = y_true.eval()
+    arry_y_true = y_true.eval(session=K.get_session())
     weights = []
 
     for val in arry_y_true:
@@ -42,7 +42,7 @@ def precision(y_true, y_pred):
 
 def auc(y_true, y_pred):
     val_weights = [0.5959302325581395, 0.40406976744186046]
-    arry_y_true = y_true.eval()
+    arry_y_true = y_true.eval(session=K.get_session())
     weights = []
 
     for val in arry_y_true:
