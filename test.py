@@ -5,6 +5,7 @@ from glob import glob
 
 import keras as keras
 import numpy as np
+from keras import backend as K
 from keras import Sequential
 from keras import optimizers
 from keras.applications import DenseNet169
@@ -17,26 +18,22 @@ from keras_applications.imagenet_utils import preprocess_input
 from skimage import transform
 from sklearn.metrics import precision_score, recall_score
 
+weights = []
 
-class Metrics(keras.callbacks.Callback):
-    def on_train_begin(self, logs={}):
-        self._data = []
 
-    def on_epoch_end(self, batch, logs={}):
-        X_val, y_val = self.validation_data[0], self.validation_data[1]
-        y_predict = np.asarray(model.predict(X_val))
+def recall(y_true, y_pred):
+    global weights
+    return K.tf.metrics.recall(y_true, y_pred, weights)
 
-        y_val = np.argmax(y_val, axis=1)
-        y_predict = np.argmax(y_predict, axis=1)
 
-        self._data.append({
-            'val_recall': recall_score(y_val, y_predict),
-            'val_precision': precision_score(y_val, y_predict),
-        })
-        return
+def precision(y_true, y_pred):
+    global weights
+    return K.tf.metrics.precision(y_true, y_pred, weights)
 
-    def get_data(self):
-        return self._data
+
+def auc(y_true, y_pred):
+    global weights
+    return K.tf.metrics.auc(y_true, y_pred, weights)
 
 
 class MuraGenerator(Sequence):
@@ -105,7 +102,7 @@ def generate_model(stage):
     adam = optimizers.Adam(lr=1e-3)
 
     model.compile(optimizer=adam,
-                  metrics=['accuracy'],
+                  metrics=['accuracy', recall, precision, auc],
                   loss='binary_crossentropy')
 
     return model
@@ -146,6 +143,7 @@ if __name__ == "__main__":
         positives += 1 if "positive" in path else 0
     negatives = len(img_paths) - positives
 
+    global weights
     total = float(len(img_paths))
     weights = [negatives/total, positives/total]
 
@@ -165,9 +163,8 @@ if __name__ == "__main__":
     reduce_lr = ReduceLROnPlateau(monitor='val_acc', factor=0.1,
                                   patience=1, min_lr=1e-6)
 
-    metrics = Metrics()
     model.fit_generator(train_generator,
-                        callbacks=[csvlogger, checkpointer, reduce_lr, metrics],
+                        callbacks=[csvlogger, checkpointer, reduce_lr],
                         epochs=10,
                         initial_epoch=starting_epoch,
                         validation_data=val_generator)
