@@ -21,17 +21,17 @@ from sklearn.metrics import precision_score, recall_score
 
 def recall(y_true, y_pred):
     weights = K.tf.convert_to_tensor([0.5959302325581395, 0.40406976744186046], dtype=K.tf.float32)
-    return K.tf.metrics.recall(y_true, y_pred, weights)
+    return K.tf.metrics.recall(y_true, y_pred)
 
 
 def precision(y_true, y_pred):
     weights = K.tf.convert_to_tensor([0.5959302325581395, 0.40406976744186046], dtype=K.tf.float32)
-    return K.tf.metrics.precision(y_true, y_pred, weights)
+    return K.tf.metrics.precision(y_true, y_pred)
 
 
 def auc(y_true, y_pred):
     weights = K.tf.convert_to_tensor([0.5959302325581395, 0.40406976744186046], dtype=K.tf.float32)
-    return K.tf.metrics.auc(y_true, y_pred, weights)
+    return K.tf.metrics.auc(y_true, y_pred)
 
 
 class MuraGenerator(Sequence):
