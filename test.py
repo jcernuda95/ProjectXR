@@ -115,9 +115,19 @@ if __name__ == "__main__":
                         help='Path to train_image_paths.csv')
     parser.add_argument('--test_path', default='./MURA-v1.1/valid_image_paths.csv',
                         help='Path to test_image_paths.csv')
+    parser.add_argument('--model_path', help='Path to a model to resume or proceed with transfer learning')
     args = parser.parse_args()
 
     starting_epoch = 0
+
+    model = generate_model(int(args.stage))
+
+    if args.resume is True or int(args.stage) == 2:
+        model.load_weights(args.model_path)
+        print("Path: ", args.model_path)
+        if args.resume is True:
+            starting_epoch = int(args.model_path[16:18])
+            print("starting epoch: ", starting_epoch)
 
     img_paths = np.loadtxt(args.train_path, dtype='str')
     img_paths = [str(i) for i in img_paths]
@@ -131,15 +141,6 @@ if __name__ == "__main__":
 
     print("Weights: ", weights)
 
-    if args.resume is True:
-        paths_models = sorted(glob('models/*'))
-        model = load_model(paths_models[-1])
-        starting_epoch = int(paths_models[-1][7:9])
-        print("Path: ", paths_models[-1])
-        print("starting epoch: ", int(paths_models[-1][7:9]))
-    else:
-        model = generate_model(int(args.stage))
-
     val_split = int(0.75 * len(img_paths))
     train_paths = img_paths[:val_split]
     val_paths = img_paths[val_split:]
@@ -150,9 +151,10 @@ if __name__ == "__main__":
     if not os.path.isdir('logs'):
         os.mkdir('logs')
 
+    logger_path = 'models/' + args.stage + 'model_coco-e{epoch:03d}-l{val_loss:.5f}.hdf5'
+    print(logger_path)
     csvlogger = CSVLogger('logs/training.log', append=args.resume)
-    checkpointer = ModelCheckpoint(
-        'models/model-e{epoch:2d}.hdf5', save_best_only=True)
+    checkpointer = ModelCheckpoint(logger_path, save_best_only=False, save_weights_only=True)
     reduce_lr = ReduceLROnPlateau(monitor='val_acc', factor=0.1,
                                   patience=1, min_lr=1e-6)
 
