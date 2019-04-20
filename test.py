@@ -3,6 +3,7 @@ import os
 import random
 from glob import glob
 
+import keras as keras
 import numpy as np
 from keras import Sequential
 from keras import optimizers
@@ -14,13 +15,36 @@ from keras.preprocessing import image
 from keras.utils import Sequence
 from keras_applications.imagenet_utils import preprocess_input
 from skimage import transform
+from sklearn.metrics import precision_score, recall_score
+
+
+class Metrics(keras.callbacks.Callback):
+    def on_train_begin(self, logs={}):
+        self._data = []
+
+    def on_epoch_end(self, batch, logs={}):
+        X_val, y_val = self.validation_data[0], self.validation_data[1]
+        y_predict = np.asarray(model.predict(X_val))
+
+        y_val = np.argmax(y_val, axis=1)
+        y_predict = np.argmax(y_predict, axis=1)
+
+        self._data.append({
+            'val_recall': recall_score(y_val, y_predict),
+            'val_precision': precision_score(y_val, y_predict),
+        })
+        return
+
+    def get_data(self):
+        return self._data
 
 
 class MuraGenerator(Sequence):
-    def __init__(self, paths_images, batch_size, augment=False):
+    def __init__(self, paths_images, batch_size, weights, augment=False):
         self.bs = batch_size
         self.paths_images = paths_images
         self.augment = augment
+        self.weights = weights
 
     def __len__(self):
         return len(self.paths_images) // self.bs
@@ -41,7 +65,7 @@ class MuraGenerator(Sequence):
 
             x_batch.append(img)
             y_batch.append(1 if "positive" in path else 0)
-            w_batch.append(1 if "positive" in path else 1.6)
+            w_batch.append(self.weights[1] if "positive" in path else self.weights[0])
 
         return [np.asarray(x_batch), np.asarray(y_batch), np.asarray(w_batch)]
 
@@ -115,13 +139,22 @@ if __name__ == "__main__":
         model = generate_model(args.stage)
 
     img_paths = np.loadtxt(args.train_path, dtype='str')
+    img_paths = [str(i) for i in img_paths]
+
+    positives = 0
+    for path in img_paths:
+        positives += 1 if "positive" in path else 0
+    negatives = len(img_paths) - positives
+
+    total = float(len(img_paths))
+    weights = [negatives/total, positives/total]
 
     val_split = int(0.75 * len(img_paths))
     train_paths = img_paths[:val_split]
     val_paths = img_paths[val_split:]
 
-    train_generator = MuraGenerator(train_paths, batch_size=16, augment=True if args.stage > 0 else False)
-    val_generator = MuraGenerator(val_paths, batch_size=16)
+    train_generator = MuraGenerator(train_paths, batch_size=16, weights=weights, augment=True if int(args.stage) > 0 else False)
+    val_generator = MuraGenerator(val_paths, batch_size=16, weights=weights)
 
     if not os.path.isdir('logs'):
         os.mkdir('logs')
@@ -132,8 +165,9 @@ if __name__ == "__main__":
     reduce_lr = ReduceLROnPlateau(monitor='val_acc', factor=0.1,
                                   patience=1, min_lr=1e-6)
 
+    metrics = Metrics()
     model.fit_generator(train_generator,
-                        callbacks=[csvlogger, checkpointer, reduce_lr],
+                        callbacks=[csvlogger, checkpointer, reduce_lr, metrics],
                         epochs=10,
                         initial_epoch=starting_epoch,
                         validation_data=val_generator)
