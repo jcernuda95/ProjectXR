@@ -20,17 +20,17 @@ from sklearn.metrics import precision_score, recall_score
 
 
 def recall(y_true, y_pred):
-    weights = [0.5959302325581395, 0.40406976744186046]
+    weights = np.array([0.5959302325581395, 0.40406976744186046])
     return K.tf.metrics.recall(y_true, y_pred, weights)
 
 
 def precision(y_true, y_pred):
-    weights = [0.5959302325581395, 0.40406976744186046]
+    weights = np.array([0.5959302325581395, 0.40406976744186046])
     return K.tf.metrics.precision(y_true, y_pred, weights)
 
 
 def auc(y_true, y_pred):
-    weights = [0.5959302325581395, 0.40406976744186046]
+    weights = np.array([0.5959302325581395, 0.40406976744186046])
     return K.tf.metrics.auc(y_true, y_pred, weights)
 
 
