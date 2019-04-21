@@ -260,9 +260,18 @@ if __name__ == "__main__":
             images = np.asarray(images)
             results = model.predict_on_batch(images)
             y_pred.append(np.mean(results, axis=1))
-            print(len(y_pred))
-            print(y_pred[0])
+            print("len y_pred: ", len(y_pred))
+            print("y_pred[0]: ", y_pred[0])
             y_pred_bin = [0 if i <= 0.5 else 1 for i in y_pred]
+            ones = 0
+            zeroes = 0
+            for pred in y_pred_bin:
+                if int(pred) is 1:
+                    ones += 1
+                if int(pred) is 0:
+                    zeroes += 1
+            print("Ones: ", ones)
+            print("Zeroes: ", zeroes)
             y_true.append(int(study[1]))
             sample_w.append(weights[section][int(study[1])])
 
