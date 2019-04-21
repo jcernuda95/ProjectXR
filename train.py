@@ -137,7 +137,7 @@ def generate_model(stage):
 
     model.summary()
 
-    adam = optimizers.Adam(lr=1e-4)
+    adam = optimizers.Adam(lr=0.5e-3)
 
     model.compile(optimizer=adam,
                   metrics=['accuracy'],
@@ -228,12 +228,12 @@ if __name__ == "__main__":
                                       verbose=1, patience=1, min_lr=1e-7)
 
         model.fit_generator(train_generator,
-                            callbacks=[csvlogger, checkpointer, reduce_lr],
-                            epochs=10,
+                            callbacks=[csvlogger, checkpointer],
+                            epochs=1,
                             initial_epoch=starting_epoch,
                             validation_data=val_generator)
 
-        # model.save_weights('./model_1.h5')
+        model.save_weights('./model_1.h5')
 
     elif args.stage == 3:
         img_paths = np.loadtxt(args.test_path, dtype='str')
