@@ -11,6 +11,7 @@ from keras import backend as K
 from keras import regularizers
 from keras import optimizers
 from keras import initializers
+from keras.models import load_model
 from keras.applications import DenseNet169
 from keras.callbacks import CSVLogger, ModelCheckpoint, ReduceLROnPlateau
 from keras.layers import Dense, GlobalAveragePooling2D, Flatten
@@ -118,13 +119,25 @@ class MuraGenerator(Sequence):
 
 
 def generate_model(args):
+    if args.resume is True or args.stage == 2:
+        model = load_model(args.model_path)
+        if int(args.stage) is 2:
+            for layer in model:
+                layer.trainable = False
+                if 'conv5' in layer.name:
+                    print("layer conv5")
+                    layer.trainable = True
+                if 'dense_1' in layer.name:
+                    layer.trainable = True
+                    print("layer dense")
+        return model
     densenet = DenseNet169(include_top=False,
                            input_shape=(320, 320, 3),
                            weights='imagenet')
 
     for layer in densenet.layers:
         layer.trainable = False
-    if args.stage > 1:
+    if int(args.stage) is 2:
         for layer in densenet.layers:
             if 'conv5' in layer.name:
                 layer.trainable = True
@@ -134,13 +147,8 @@ def generate_model(args):
     model.add(densenet)
     model.add(GlobalAveragePooling2D())
     model.add(Dense(1, activation='sigmoid'))
-                    # , kernel_initializer=initializers.glorot_normal(),
-                    # kernel_regularizer=regularizers.l2(0.01), bias_regularizer=regularizers.l2(0.01)))
-    model.summary()
 
-    if args.resume is True or args.stage == 2:
-        model.load_weights(args.model_path)
-        print("Path: ", args.model_path)
+    model.summary()
 
     adam = optimizers.Adam(lr=0.5e-3)
 
