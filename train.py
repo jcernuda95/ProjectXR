@@ -16,12 +16,26 @@ from keras.callbacks import CSVLogger, ModelCheckpoint, ReduceLROnPlateau
 from keras.layers import Dense, GlobalAveragePooling2D, Flatten
 from keras.preprocessing import image
 from keras.utils import Sequence
-from keras_applications.imagenet_utils import preprocess_input
+# from keras_applications.densenet import preprocess_input
 from skimage import transform
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, log_loss, accuracy_score
 from sklearn.model_selection import train_test_split
 
 import pandas as pd
+
+
+def preprocess_input(img, data_format):
+    img /= 255.
+    mean = [0.485, 0.456, 0.406]
+    std = [0.229, 0.224, 0.225]
+    img[..., 0] -= mean[0]
+    img[..., 1] -= mean[1]
+    img[..., 2] -= mean[2]
+
+    img[..., 0] /= std[0]
+    img[..., 1] /= std[1]
+    img[..., 2] /= std[2]
+    return img
 
 
 def recall(y_true, y_pred, weights):
@@ -34,6 +48,7 @@ def precision(y_true, y_pred, weights):
 
 def auc(y_true, y_pred, weights):
     return roc_auc_score(y_true, y_pred, sample_weight=weights)
+
 
 
 def transform_image(image, augment):
@@ -148,6 +163,7 @@ def generate_model(stage):
 
 
 if __name__ == "__main__":
+    to_print=True
     print("JC")
     parser = argparse.ArgumentParser(description="MURA image classification")
     parser.add_argument('-r', '--resume', action='store_true', default='False',
@@ -275,7 +291,7 @@ if __name__ == "__main__":
                 zeroes += 1
         print("Ones: ", ones)
         print("Zeroes: ", zeroes)
-        
+
         print("Scores: ")
         print("Number of studies: ", len(y_true))
         print("\tLoss: ", log_loss(y_true, y_pred))
