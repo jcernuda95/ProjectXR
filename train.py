@@ -255,6 +255,8 @@ if __name__ == "__main__":
 
                 img = transform_image(img, False)
                 images.append(img)
+                images = np.asarray(images)
+                print(images.shape)
 
             results = model.predict_on_batch(images)
             print("Results: ", results)
