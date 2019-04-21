@@ -21,6 +21,8 @@ from skimage import transform
 from sklearn.metrics import roc_auc_score, precision_score, recall_score, log_loss, accuracy_score
 from sklearn.model_selection import train_test_split
 
+import pandas as pd
+
 
 def recall(y_true, y_pred, weights):
     return recall_score(y_true, y_pred, sample_weight=weights)
@@ -82,33 +84,35 @@ def get_cam(model, img, predicted_class):
 
 
 class MuraGenerator(Sequence):
-    def __init__(self, paths_images, batch_size, weights, augment=False):
+    def __init__(self, paths_studies, batch_size, weights, augment=False):
         self.bs = batch_size
-        self.paths_images = paths_images
+        self.paths_studies = paths_studies
         self.augment = augment
         self.weights = weights
 
     def __len__(self):
-        return len(self.paths_images) // self.bs
+        return len(self.paths_studies) // self.bs
 
     def __getitem__(self, idx):
         x_batch = []
         y_batch = []
         w_batch = []
 
-        paths = self.paths_images[idx * self.bs: (idx + 1) * self.bs]
+        paths = self.paths_studies[idx * self.bs: (idx + 1) * self.bs]
         for path in paths:
-            img = image.load_img(path, color_mode='rgb',
-                                 target_size=(320, 320))
+            section = path[0][16:23]
+            img_paths = glob(str(path[0]) + '*')
+            for img_path in img_paths:
+                img = image.load_img(img_path, color_mode='rgb',
+                                     target_size=(320, 320))
 
-            img = image.img_to_array(img)
+                img = image.img_to_array(img)
 
-            img = transform_image(img, self.augment)
+                img = transform_image(img, self.augment)
 
-            x_batch.append(img)
-            y_batch.append(1 if "positive" in path else 0)
-            w_batch.append(
-                self.weights[1] if "positive" in path else self.weights[0])
+                x_batch.append(img)
+                y_batch.append(int(path[1]))
+                w_batch.append(self.weights[section][int(path[1])])
 
         return [np.asarray(x_batch), np.asarray(y_batch), np.asarray(w_batch)]
 
@@ -155,10 +159,12 @@ if __name__ == "__main__":
                              '2-train dense with augmentation and last conv block.'
                              '3-testing, report all metric of the test data.'
                              '4-evaluate a single client, indicated with -c, plot image and CAM.')
-    parser.add_argument('--train_path', default='./MURA-v1.1/train_image_paths.csv',
+    parser.add_argument('--train_path', default='./MURA-v1.1/train_labeled_studies.csv',
+                        help='Path to train_labeled_studies.csv')
+    parser.add_argument('--train_images', default='./MURA-v1.1/train_image_paths.csv',
                         help='Path to train_image_paths.csv')
-    parser.add_argument('--test_path', default='./MURA-v1.1/valid_image_paths.csv',
-                        help='Path to test_image_paths.csv')
+    parser.add_argument('--test_path', default='./MURA-v1.1/valid_labeled_studies.csv',
+                        help='Path to valid_labeled_studies.csv')
     parser.add_argument('--model_path',
                         help='Path to a model to resume or proceed with transfer learning')
     parser.add_argument('-c', '--client', default=0, type=int,
@@ -167,7 +173,7 @@ if __name__ == "__main__":
 
     starting_epoch = 0
 
-    model = generate_model(args.stage)
+    # model = generate_model(args.stage)
 
     if args.resume is True or args.stage == 2:
         model.load_weights(args.model_path)
@@ -176,56 +182,39 @@ if __name__ == "__main__":
             starting_epoch = int(args.model_path[17:19])
             print("starting epoch: ", starting_epoch)
 
-    img_paths = np.loadtxt(args.train_path, dtype='str')
-    img_paths = [str(i) for i in img_paths]
+    temp_path = 'train_labeled_studies.csv'
+    # studies_path = pd.read_csv(args.train_path, delimiter=',')
+    studies_path = np.asarray(pd.read_csv(temp_path, delimiter=',', header=None))
 
-    positives = 0
-    for path in img_paths:
-        positives += 1 if "positive" in path else 0
-    negatives = len(img_paths) - positives
+    weights = {
+        "XR_SHOU": [0, 0],
+        "XR_HUME": [0, 0],
+        "XR_FORE": [0, 0],
+        "XR_HAND": [0, 0],
+        "XR_ELBO": [0, 0],
+        "XR_FING": [0, 0]
+    }
 
-    total = float(len(img_paths))
-    weights = [negatives / total, positives / total]
+    paths_imgs = np.loadtxt(args.train_images, dtype='str')
+    for path in paths_imgs:
+        section = path[16:23]
+        if "positive" in path:
+            weights[section][1] += 1
+        elif "negative" in path:
+            weights[section][0] += 1
+
+    for section in weights:
+        weights[section] = weights[section]/np.sum(weights[section])
+
     print(weights)
 
     if args.stage < 3:
 
-        train_paths, val_paths = train_test_split(img_paths)
+        train_paths, val_paths = train_test_split(studies_path)
 
-        positives = 0
-        for path in train_paths:
-            positives += 1 if "positive" in path else 0
-        negatives = len(train_paths) - positives
-
-        total = float(len(train_paths))
-        weights_train_paths = [negatives / total, positives / total]
-
-        positives = 0
-        for path in val_paths:
-            positives += 1 if "positive" in path else 0
-        negatives = len(val_paths) - positives
-
-        total = float(len(val_paths))
-        weights_val_paths = [negatives / total, positives / total]
-
-        print("Train weights: ", weights_train_paths)
-        print("Val weights: ", weights_val_paths)
-
-        # train_paths = sorted(train_paths)
-        # train_paths.reverse()
-        # print("Train path: ", train_paths[1])
-        # paths =[]
-        # for path in train_paths:
-        #     if "positive" in path:
-        #         paths.append(path)
-        # for path in train_paths:
-        #     if "negative" in path:
-        #         paths.append(path)
-        # print("Train path: ", train_paths[1])
-
-        train_generator = MuraGenerator(train_paths, batch_size=16, weights=weights,
+        train_generator = MuraGenerator(train_paths, batch_size=8, weights=weights,
                                         augment=True if args.stage > 0 else False)
-        val_generator = MuraGenerator(val_paths, batch_size=16, weights=weights)
+        val_generator = MuraGenerator(val_paths, batch_size=8, weights=weights)
 
         if not os.path.isdir('logs'):
             os.mkdir('logs')
