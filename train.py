@@ -2,6 +2,8 @@ import argparse
 import os
 import random
 
+from glob import glob
+
 import matplotlib.pyplot as plt
 import numpy as np
 from keras import Sequential
@@ -94,8 +96,8 @@ class MuraGenerator(Sequence):
         y_batch = []
         w_batch = []
 
-        while len(x_batch) < self.bs:
-            path = str(self.paths_images[idx])
+        paths = self.paths_images[idx * self.bs: (idx + 1) * self.bs]
+        for path in paths:
             img = image.load_img(path, color_mode='rgb',
                                  target_size=(320, 320))
 
@@ -127,11 +129,12 @@ def generate_model(stage):
 
     model.add(densenet)
     model.add(GlobalAveragePooling2D())
-    model.add(Dense(1, activation='sigmoid', kernel_initializer=initializers.glorot_normal(),
-                    kernel_regularizer=regularizers.l2(0.01), bias_regularizer=regularizers.l2(0.01)))
+    model.add(Dense(1, activation='sigmoid'))
+                    # , kernel_initializer=initializers.glorot_normal(),
+                    # kernel_regularizer=regularizers.l2(0.01), bias_regularizer=regularizers.l2(0.01)))
     model.summary()
 
-    adam = optimizers.Adam(lr=0.5e-3)
+    adam = optimizers.Adam(lr=1e-4)
 
     model.compile(optimizer=adam,
                   metrics=['accuracy'],
@@ -175,6 +178,7 @@ if __name__ == "__main__":
 
     img_paths = np.loadtxt(args.train_path, dtype='str')
     img_paths = [str(i) for i in img_paths]
+
     positives = 0
     for path in img_paths:
         positives += 1 if "positive" in path else 0
@@ -207,9 +211,9 @@ if __name__ == "__main__":
         print("Train weights: ", weights_train_paths)
         print("Val weights: ", weights_val_paths)
 
-        train_paths = sorted(train_paths)
-        train_paths.reverse()
-        print("Train path: ", train_paths[1])
+        # train_paths = sorted(train_paths)
+        # train_paths.reverse()
+        # print("Train path: ", train_paths[1])
         # paths =[]
         # for path in train_paths:
         #     if "positive" in path:
