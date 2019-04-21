@@ -173,7 +173,7 @@ if __name__ == "__main__":
 
     starting_epoch = 0
 
-    # model = generate_model(args.stage)
+    model = generate_model(args.stage)
 
     if args.resume is True or args.stage == 2:
         model.load_weights(args.model_path)
@@ -182,9 +182,7 @@ if __name__ == "__main__":
             starting_epoch = int(args.model_path[17:19])
             print("starting epoch: ", starting_epoch)
 
-    temp_path = 'train_labeled_studies.csv'
-    # studies_path = pd.read_csv(args.train_path, delimiter=',')
-    studies_path = np.asarray(pd.read_csv(temp_path, delimiter=',', header=None))
+    studies_path = np.asarray(pd.read_csv(args.train_path, delimiter=',', header=None))
 
     weights = {
         "XR_SHOU": [0, 0],
