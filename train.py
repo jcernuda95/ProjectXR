@@ -190,7 +190,8 @@ if __name__ == "__main__":
         "XR_FORE": [0, 0],
         "XR_HAND": [0, 0],
         "XR_ELBO": [0, 0],
-        "XR_FING": [0, 0]
+        "XR_FING": [0, 0],
+        "XR_WRIS": [0, 0]
     }
 
     paths_imgs = np.loadtxt(args.train_images, dtype='str')
