@@ -11,7 +11,6 @@ from keras import backend as K
 from keras import regularizers
 from keras import optimizers
 from keras import initializers
-from keras.models import load_model
 from keras.applications import DenseNet169
 from keras.callbacks import CSVLogger, ModelCheckpoint, ReduceLROnPlateau
 from keras.layers import Dense, GlobalAveragePooling2D, Flatten
@@ -118,26 +117,14 @@ class MuraGenerator(Sequence):
         return [np.asarray(x_batch), np.asarray(y_batch), np.asarray(w_batch)]
 
 
-def generate_model(args):
-    if args.resume is True or args.stage == 2:
-        model = load_model(args.model_path)
-        if int(args.stage) is 2:
-            for layer in model:
-                layer.trainable = False
-                if 'conv5' in layer.name:
-                    print("layer conv5")
-                    layer.trainable = True
-                if 'dense_1' in layer.name:
-                    layer.trainable = True
-                    print("layer dense")
-        return model
+def generate_model(stage):
     densenet = DenseNet169(include_top=False,
                            input_shape=(320, 320, 3),
                            weights='imagenet')
 
     for layer in densenet.layers:
         layer.trainable = False
-    if int(args.stage) is 2:
+    if stage is 2:
         for layer in densenet.layers:
             if 'conv5' in layer.name:
                 layer.trainable = True
@@ -150,7 +137,7 @@ def generate_model(args):
 
     model.summary()
 
-    adam = optimizers.Adam(lr=0.5e-3)
+    adam = optimizers.Adam(lr=1e-4)
 
     model.compile(optimizer=adam,
                   metrics=['accuracy'],
@@ -184,11 +171,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     starting_epoch = 0
-    if args.resume is True:
-        starting_epoch = int(args.model_path[25:28])
-        print("starting epoch: ", starting_epoch)
 
-    model = generate_model(args)
+    model = generate_model(int(args.stage))
+
+    if args.resume is True or args.stage == 2:
+        model.load_weights(args.model_path, by_name=True)
+        print("Path: ", args.model_path)
+        if args.resume is True:
+            starting_epoch = int(args.model_path[25:28])
+            print("starting epoch: ", starting_epoch)
 
     studies_path = np.asarray(pd.read_csv(args.train_path, delimiter=',', header=None))
 
@@ -237,10 +228,12 @@ if __name__ == "__main__":
                                       verbose=1, patience=1, min_lr=1e-7)
 
         model.fit_generator(train_generator,
-                            callbacks=[csvlogger, checkpointer],
+                            callbacks=[csvlogger, checkpointer, reduce_lr],
                             epochs=10,
                             initial_epoch=starting_epoch,
                             validation_data=val_generator)
+
+        # model.save_weights('./model_1.h5')
 
     elif args.stage == 3:
         img_paths = np.loadtxt(args.test_path, dtype='str')
