@@ -242,6 +242,7 @@ if __name__ == "__main__":
 
         y_pred = []
         y_true = []
+        y_pred_bin = []
         sample_w = []
         for study in studies_path:
             section = study[0][16:23]
@@ -255,12 +256,13 @@ if __name__ == "__main__":
 
                 img = transform_image(img, False)
                 images.append(img)
-                images = np.asarray(images)
-                print(images.shape)
 
+            images = np.asarray(images)
             results = model.predict_on_batch(images)
-            print("Results: ", results)
-            y_pred.append(np.mean(results))
+            y_pred.append(np.mean(results, axis=1))
+            print(len(y_pred))
+            print(y_pred[0])
+            y_pred_bin = [0 if i <= 0.5 else 1 for i in y_pred]
             y_true.append(int(study[1]))
             sample_w.append(weights[section][int(study[1])])
 
@@ -268,12 +270,12 @@ if __name__ == "__main__":
         print("Number of studies: ", len(y_true))
         print("\tLoss: ", log_loss(y_true, y_pred))
         print("\tLoss (weights): ", log_loss(y_true, y_pred, sample_weight=sample_w))
-        print("\tAccuracy: ", accuracy_score(y_true, y_pred))
-        print("\tAccuracy (weights): ", accuracy_score(y_true, y_pred, sample_weight=sample_w))
-        print("\tRecall: ", recall_score(y_true, y_pred))
-        print("\tRecall (weights): ", recall_score(y_true, y_pred, sample_weight=sample_w))
-        print("\tPrecision: ", precision_score(y_true, y_pred))
-        print("\tPrecision (weights): ", precision_score(y_true, y_pred, sample_weight=sample_w))
+        print("\tAccuracy: ", accuracy_score(y_true, y_pred_bin))
+        print("\tAccuracy (weights): ", accuracy_score(y_true, y_pred_bin, sample_weight=sample_w))
+        print("\tRecall: ", recall_score(y_true, y_pred_bin))
+        print("\tRecall (weights): ", recall_score(y_true, y_pred_bin, sample_weight=sample_w))
+        print("\tPrecision: ", precision_score(y_true, y_pred_bin))
+        print("\tPrecision (weights): ", precision_score(y_true, y_pred_bin, sample_weight=sample_w))
         print("\tAUC: ", roc_auc_score(y_true, y_pred))
         print("\tAUC (weights): ", roc_auc_score(y_true, y_pred, sample_weight=sample_w))
 
