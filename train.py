@@ -138,8 +138,9 @@ def generate_model(stage):
     model.summary()
 
     adam = optimizers.Adam(lr=0.5e-3)
+    sgd = optimizers.SGD(lr=0.5e-3, decay=1e-6, momentum=0.9, nesterov=True)
 
-    model.compile(optimizer=adam,
+    model.compile(optimizer=sgd,
                   metrics=['accuracy'],
                   loss='binary_crossentropy')
 
@@ -162,8 +163,11 @@ if __name__ == "__main__":
                         help='Path to train_labeled_studies.csv')
     parser.add_argument('--train_images', default='./MURA-v1.1/train_image_paths.csv',
                         help='Path to train_image_paths.csv')
+
     parser.add_argument('--test_path', default='./MURA-v1.1/valid_labeled_studies.csv',
                         help='Path to valid_labeled_studies.csv')
+    parser.add_argument('--test_images', default='./MURA-v1.1/valid_image_paths.csv',
+                        help='Path to valid_image_paths.csv')
     parser.add_argument('--model_path',
                         help='Path to a model to resume or proceed with transfer learning')
     parser.add_argument('-c', '--client', default=0, type=int,
@@ -229,20 +233,18 @@ if __name__ == "__main__":
 
         model.fit_generator(train_generator,
                             callbacks=[csvlogger, checkpointer],
-                            epochs=1,
+                            epochs=10,
                             initial_epoch=starting_epoch,
                             validation_data=val_generator)
 
-        model.save_weights('./model_1.h5')
-
     elif args.stage == 3:
-        img_paths = np.loadtxt(args.test_path, dtype='str')
-        img_paths = [str(i) for i in img_paths]
+        studies_path = np.asarray(pd.read_csv(args.test_path, delimiter=',', header=None))
 
-        test_generator = MuraGenerator(img_paths, batch_size=16, weights=weights, augment=False)
+        test_generator = MuraGenerator(studies_path, batch_size=8, weights=weights, augment=False)
         y_pred = model.predict_generator(test_generator)
 
-        sample_w = [weights[1] if "positive" in path else weights[0] for path in img_paths]
+        img_paths = np.loadtxt(args.test_images, dtype='str')
+        sample_w = [weights[path[16:23]][1] if "positive" in path else weights[path[16:23]][0] for path in img_paths]
         y_true = [1 if 'positive' in path else 0 for path in img_paths]
 
         print("Scores: ")
