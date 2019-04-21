@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from keras import Sequential
 from keras import backend as K
+from keras import regularizers
 from keras import optimizers
 from keras import initializers
 from keras.applications import DenseNet169
@@ -117,7 +118,7 @@ def generate_model(stage):
 
     for layer in densenet.layers:
         layer.trainable = False
-    if stage >= 1:
+    if stage > 1:
         for layer in densenet.layers:
             if 'conv5' in layer.name:
                 layer.trainable = True
@@ -126,10 +127,11 @@ def generate_model(stage):
 
     model.add(densenet)
     model.add(GlobalAveragePooling2D())
-    model.add(Dense(1, activation='sigmoid', kernel_initializer=initializers.glorot_normal()))
+    model.add(Dense(1, activation='sigmoid', kernel_initializer=initializers.glorot_normal(),
+                    kernel_regularizer=regularizers.l2(0.01), bias_regularizer=regularizers.l2(0.01)))
     model.summary()
 
-    adam = optimizers.Adam(lr=1e-3)
+    adam = optimizers.Adam(lr=0.5e-3)
 
     model.compile(optimizer=adam,
                   metrics=['accuracy'],
