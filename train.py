@@ -117,14 +117,14 @@ class MuraGenerator(Sequence):
         return [np.asarray(x_batch), np.asarray(y_batch), np.asarray(w_batch)]
 
 
-def generate_model(stage):
+def generate_model(args):
     densenet = DenseNet169(include_top=False,
                            input_shape=(320, 320, 3),
                            weights='imagenet')
 
     for layer in densenet.layers:
         layer.trainable = False
-    if stage > 1:
+    if args.stage > 1:
         for layer in densenet.layers:
             if 'conv5' in layer.name:
                 layer.trainable = True
@@ -137,6 +137,13 @@ def generate_model(stage):
                     # , kernel_initializer=initializers.glorot_normal(),
                     # kernel_regularizer=regularizers.l2(0.01), bias_regularizer=regularizers.l2(0.01)))
     model.summary()
+
+    if args.resume is True or args.stage == 2:
+        model.load_weights(args.model_path)
+        print("Path: ", args.model_path)
+        if args.resume is True:
+            starting_epoch = int(args.model_path[25:28])
+            print("starting epoch: ", starting_epoch)
 
     adam = optimizers.Adam(lr=1e-4)
 
@@ -173,14 +180,7 @@ if __name__ == "__main__":
 
     starting_epoch = 0
 
-    model = generate_model(args.stage)
-
-    if args.resume is True or args.stage == 2:
-        model.load_weights(args.model_path)
-        print("Path: ", args.model_path)
-        if args.resume is True:
-            starting_epoch = int(args.model_path[17:19])
-            print("starting epoch: ", starting_epoch)
+    model = generate_model(args)
 
     studies_path = np.asarray(pd.read_csv(args.train_path, delimiter=',', header=None))
 
