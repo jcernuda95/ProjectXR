@@ -246,7 +246,7 @@ if __name__ == "__main__":
         for study in studies_path:
             section = study[0][16:23]
             img_paths = glob(str(study[0]) + '*')
-            results = []
+            images = []
             for img_path in img_paths:
                 img = image.load_img(img_path, color_mode='rgb',
                                      target_size=(320, 320))
@@ -254,7 +254,10 @@ if __name__ == "__main__":
                 img = image.img_to_array(img)
 
                 img = transform_image(img, False)
-                results.append(model.predict(img))
+                images.append(img)
+
+            results = model.predict_on_batch(images)
+            print("Results: ", results)
             y_pred.append(np.mean(results))
             y_true.append(int(study[1]))
             sample_w.append(weights[section][int(study[1])])
