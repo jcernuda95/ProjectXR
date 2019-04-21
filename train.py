@@ -141,11 +141,8 @@ def generate_model(args):
     if args.resume is True or args.stage == 2:
         model.load_weights(args.model_path)
         print("Path: ", args.model_path)
-        if args.resume is True:
-            starting_epoch = int(args.model_path[25:28])
-            print("starting epoch: ", starting_epoch)
 
-    adam = optimizers.Adam(lr=1e-4)
+    adam = optimizers.Adam(lr=0.5e-3)
 
     model.compile(optimizer=adam,
                   metrics=['accuracy'],
@@ -179,6 +176,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     starting_epoch = 0
+    if args.resume is True:
+        starting_epoch = int(args.model_path[25:28])
+        print("starting epoch: ", starting_epoch)
 
     model = generate_model(args)
 
@@ -229,7 +229,7 @@ if __name__ == "__main__":
                                       verbose=1, patience=1, min_lr=1e-7)
 
         model.fit_generator(train_generator,
-                            callbacks=[csvlogger, checkpointer, reduce_lr],
+                            callbacks=[csvlogger, checkpointer],
                             epochs=10,
                             initial_epoch=starting_epoch,
                             validation_data=val_generator)
