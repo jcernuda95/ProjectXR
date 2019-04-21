@@ -178,7 +178,7 @@ if __name__ == "__main__":
 
     model = generate_model(int(args.stage))
 
-    if args.resume is True or args.stage == 2:
+    if args.resume is True or args.stage >= 2:
         model.load_weights(args.model_path, by_name=True)
         print("Path: ", args.model_path)
         if args.resume is True:
@@ -240,19 +240,37 @@ if __name__ == "__main__":
     elif args.stage == 3:
         studies_path = np.asarray(pd.read_csv(args.test_path, delimiter=',', header=None))
 
-        test_generator = MuraGenerator(studies_path, batch_size=8, weights=weights, augment=False)
-        y_pred = model.predict_generator(test_generator)
+        y_pred = []
+        y_true = []
+        sample_w = []
+        for study in studies_path:
+            section = study[0][16:23]
+            img_paths = glob(str(study[0]) + '*')
+            results = []
+            for img_path in img_paths:
+                img = image.load_img(img_path, color_mode='rgb',
+                                     target_size=(320, 320))
 
-        img_paths = np.loadtxt(args.test_images, dtype='str')
-        sample_w = [weights[path[16:23]][1] if "positive" in path else weights[path[16:23]][0] for path in img_paths]
-        y_true = [1 if 'positive' in path else 0 for path in img_paths]
+                img = image.img_to_array(img)
+
+                img = transform_image(img, False)
+                results.append(model.predict(img))
+            y_pred.append(np.mean(results))
+            y_true.append(int(study[1]))
+            sample_w.append(weights[section][int(study[1])])
 
         print("Scores: ")
-        print("\tLoss: ", log_loss(y_true, y_pred, sample_weight=sample_w))
-        print("\tAccuracy: ", accuracy_score(y_true, y_pred, sample_weight=sample_w))
-        print("\tRecall: ", recall_score(y_true, y_pred, sample_weight=sample_w))
-        print("\tPrecision: ", precision_score(y_true, y_pred, sample_weight=sample_w))
-        print("\tAUC: ", roc_auc_score(y_true, y_pred, sample_weight=sample_w))
+        print("Number of studies: ", len(y_true))
+        print("\tLoss: ", log_loss(y_true, y_pred))
+        print("\tLoss (weights): ", log_loss(y_true, y_pred, sample_weight=sample_w))
+        print("\tAccuracy: ", accuracy_score(y_true, y_pred))
+        print("\tAccuracy (weights): ", accuracy_score(y_true, y_pred, sample_weight=sample_w))
+        print("\tRecall: ", recall_score(y_true, y_pred))
+        print("\tRecall (weights): ", recall_score(y_true, y_pred, sample_weight=sample_w))
+        print("\tPrecision: ", precision_score(y_true, y_pred))
+        print("\tPrecision (weights): ", precision_score(y_true, y_pred, sample_weight=sample_w))
+        print("\tAUC: ", roc_auc_score(y_true, y_pred))
+        print("\tAUC (weights): ", roc_auc_score(y_true, y_pred, sample_weight=sample_w))
 
     elif args.stage == 4:
         img_paths = np.loadtxt(args.test_path, dtype='str')
