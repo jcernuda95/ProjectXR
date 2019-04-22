@@ -139,10 +139,6 @@ def generate_model(stage):
 
     for layer in densenet.layers:
         layer.trainable = False
-    if stage is 2:
-        for layer in densenet.layers:
-            if 'conv5' in layer.name:
-                layer.trainable = True
 
     model = Sequential()
 
@@ -158,6 +154,18 @@ def generate_model(stage):
     model.compile(optimizer=sgd,
                   metrics=['accuracy'],
                   loss='binary_crossentropy')
+
+    if args.resume is True or args.stage >= 2:
+        model.load_weights(args.model_path, by_name=True)
+        print("Path: ", args.model_path)
+
+    if stage is 2:
+        for layer in densenet.layers:
+            if 'conv5' in layer.name:
+                layer.trainable = True
+        model.compile(optimizer=sgd,
+                      metrics=['accuracy'],
+                      loss='binary_crossentropy')
 
     return model
 
@@ -188,18 +196,20 @@ if __name__ == "__main__":
                         help='Path to a model to resume or proceed with transfer learning')
     parser.add_argument('-c', '--client', default=0, type=int,
                         help='Client to evaluate')
+
+    parser.add_argument('--section', default='XR_WRIS',
+                        help='XR_SHOU, XR_HUME, XR_FORE, XR_HAND, XR_ELBO, XR_FING, XR_WRIS')
+
+
     args = parser.parse_args()
 
     starting_epoch = 0
 
     model = generate_model(int(args.stage))
 
-    if args.resume is True or args.stage >= 2:
-        model.load_weights(args.model_path, by_name=True)
-        print("Path: ", args.model_path)
-        if args.resume is True:
-            starting_epoch = int(args.model_path[25:28])
-            print("starting epoch: ", starting_epoch)
+    if args.resume is True:
+        starting_epoch = int(args.model_path[25:28])
+        print("starting epoch: ", starting_epoch)
 
     studies_path = np.asarray(pd.read_csv(args.train_path, delimiter=',', header=None))
 
@@ -255,6 +265,8 @@ if __name__ == "__main__":
 
     elif args.stage == 3:
         studies_path = np.asarray(pd.read_csv(args.test_path, delimiter=',', header=None))
+        if args.section is not None:
+            studies_path = [path for path in studies_path if args.section in path]
 
         y_pred = []
         y_true = []
