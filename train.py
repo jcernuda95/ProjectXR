@@ -266,7 +266,7 @@ if __name__ == "__main__":
     elif args.stage == 3:
         studies_path = np.asarray(pd.read_csv(args.test_path, delimiter=',', header=None))
         if args.section is not None:
-            studies_path = [path for path in studies_path if args.section in path]
+            studies_path = [path for path in studies_path if args.section in path[0]]
 
         y_pred = []
         y_true = []
