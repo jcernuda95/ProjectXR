@@ -6,6 +6,9 @@ from glob import glob
 
 import matplotlib.pyplot as plt
 import numpy as np
+from keras.models import Model
+from keras.metrics import binary_accuracy, binary_crossentropy
+
 from keras import Sequential
 from keras import backend as K
 from keras import regularizers
@@ -133,39 +136,43 @@ class MuraGenerator(Sequence):
 
 
 def generate_model(stage):
-    densenet = DenseNet169(include_top=False,
-                           input_shape=(320, 320, 3),
-                           weights='imagenet')
+    base_model = DenseNet169(include_top=False,
+                             input_shape=(320, 320, 3),
+                             weights='imagenet')
 
-    for layer in densenet.layers:
-        layer.trainable = False
+    x = base_model.output
+    x = GlobalAveragePooling2D()(x)
+    x = Dense(1, activation='sigmoid', name='predictions')(x)
 
-    model = Sequential()
+    model = Model(inputs=base_model.inputs, outputs=x)
 
-    model.add(densenet)
-    model.add(GlobalAveragePooling2D())
-    model.add(Dense(1, activation='sigmoid'))
-
-    model.summary()
-
-    adam = optimizers.Adam(lr=0.5e-3)
-    sgd = optimizers.SGD(lr=0.5e-3, decay=1e-6, momentum=0.9, nesterov=True)
+    adam = optimizers.Adam(lr=1e-4)
+    sgd = optimizers.SGD(lr=1e-4)
 
     model.compile(optimizer=sgd,
-                  metrics=['accuracy'],
-                  loss='binary_crossentropy')
+                  metrics=[binary_accuracy],
+                  loss=binary_crossentropy)
 
-    if args.resume is True or args.stage >= 2:
-        model.load_weights(args.model_path, by_name=True)
-        print("Path: ", args.model_path)
+    for layer in base_model.layers:
+        layer.trainable = False
 
     if stage is 2:
-        for layer in densenet.layers:
-            if 'conv5' in layer.name:
+        print("Trying to load from: ", args.model_path)
+        if args.model_path:
+            model.load_weights(args.model_path, by_name=True)
+
+        set_trainable = False
+        for layer in base_model.layers:
+            # if "block12" in layer.name:  # what block do we want to start unfreezing
+            set_trainable = True
+            if set_trainable:
                 layer.trainable = True
-        model.compile(optimizer=sgd,
-                      metrics=['accuracy'],
-                      loss='binary_crossentropy')
+            else:
+                layer.trainable = False
+
+    model.compile(optimizer=sgd,
+                  metrics=['binary_accuracy'],
+                  loss='binary_crossentropy')
 
     return model
 
